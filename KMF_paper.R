@@ -242,20 +242,16 @@ sqrt(mean((pred.rf*100-y.test*100)^2))
 ########################################
 ## generalised PLS funciton
 source("tools.r")
-my.plsglm.clean <- function(x, y, m.plsglm, 
+plsglm.cb.simple <- function(x, y, m.plsglm, 
                             beta0=NULL,
                             centering=TRUE, scaling=TRUE, intercept=TRUE,
                             maxit=20, tol=0.1,
-                            kappa1=function(x) {1-1/x-1/(1-exp(x))},
-                            kappa2=function(x) {1/x^2+1/(2-2*cosh(x))},
                             verbose=FALSE){
   
-  return(my.plsglm.new(X=x, Y=y, ncomp=m.plsglm, 
+  return(plsglm.cb(X=x, Y=y, ncomp=m.plsglm, 
                        beta0=beta0,
                        centering=centering, scaling=scaling, intercept=intercept,
                        maxit=maxit, tol=tol,
-                       kappa1=kappa1,
-                       kappa2=kappa2,
                        verbose=verbose)$BETA[,,m.plsglm])
 }
 #######################################
@@ -273,7 +269,7 @@ xx=cbind(xcf,xx[,-1])
 
 #fit GPLS
 nc=28 
-beta.hat.pls2=my.plsglm.clean(xx, yy, nc,scaling=FALSE)
+beta.hat.pls2=plsglm.cb.simple(xx, yy, nc,scaling=FALSE)
 gc()
 eta.hat.pls2=as.vector(xx%*%beta.hat.pls2[-1]+beta.hat.pls2[1])
 fit.pls2=kappa1(eta.hat.pls2)
@@ -316,7 +312,7 @@ xxx=cbind(xx,xxx[,-1])
 # fit GPLS
 memory.limit(32000)
 nc=33
-beta.hat.pls3=my.plsglm.clean(xxx, yy, nc,scaling=FALSE)
+beta.hat.pls3=plsglm.cb.simple(xxx, yy, nc,scaling=FALSE)
 gc()
 eta.hat.pls3=as.vector(xxx%*%beta.hat.pls3[-1]+beta.hat.pls3[1])
 fit.pls3=kappa1(eta.hat.pls3)
@@ -377,7 +373,7 @@ xxxx=cbind(xxx,xxxx[,-1])
 
 # fit GPLS
 nc=29
-beta.hat.pls4=my.plsglm.clean(xxxx, yy, nc,scaling=FALSE)
+beta.hat.pls4=plsglm.cb.simple(xxxx, yy, nc,scaling=FALSE)
 eta.hat.pls4=as.vector(xxxx%*%beta.hat.pls4[-1]+beta.hat.pls4[1])
 fit.pls4=kappa1(eta.hat.pls4)
 
@@ -401,21 +397,21 @@ nc=42
 cor2=rmse2=cor3=rmse3=cor4=rmse4=ll2=ll3=ll4=cor2S=rmse2S=cor3S=rmse3S=cor4S=rmse4S=ll2S=ll3S=ll4S=rep(NA,nc)
 for (i in 5:nc)
 {
-  beta.hat.pls2=my.plsglm.clean(xx.train, y, i,scaling=FALSE)
+  beta.hat.pls2=plsglm.cb.simple(xx.train, y, i,scaling=FALSE)
   pred.cb.pls2=kappa1(as.vector(as.matrix(xx.test)%*%beta.hat.pls2[-1]+beta.hat.pls2[1]))
   cor2[i]=cor(pred.cb.pls2,y.test)
   rmse2[i]=sqrt(mean((pred.cb.pls2*100-y.test*100)^2))
   eta.hat.pls2=as.vector(xx.train%*%beta.hat.pls2[-1]+beta.hat.pls2[1])
   ll2[i]=sum(y*eta.hat.pls2-kappa(eta.hat.pls2))
   
-  beta.hat.pls3=my.plsglm.clean(xxx.train, y, i,scaling=FALSE)
+  beta.hat.pls3=plsglm.cb.simple(xxx.train, y, i,scaling=FALSE)
   pred.cb.pls3=kappa1(as.vector(as.matrix(xxx.test)%*%beta.hat.pls3[-1]+beta.hat.pls3[1]))
   cor3[i]=cor(pred.cb.pls3,y.test)
   rmse3[i]=sqrt(mean((pred.cb.pls3*100-y.test*100)^2))
   eta.hat.pls3=as.vector(xxx.train%*%beta.hat.pls3[-1]+beta.hat.pls3[1])
   ll3[i]=sum(y*eta.hat.pls3-kappa(eta.hat.pls3))
   
-  beta.hat.pls4=my.plsglm.clean(xxxx.train, y, i,scaling=FALSE)
+  beta.hat.pls4=plsglm.cb.simple(xxxx.train, y, i,scaling=FALSE)
   pred.cb.pls4=kappa1(as.vector(as.matrix(xxxx.test)%*%beta.hat.pls4[-1]+beta.hat.pls4[1]))
   cor4[i]=cor(pred.cb.pls4,y.test)
   rmse4[i]=sqrt(mean((pred.cb.pls4*100-y.test*100)^2))
@@ -423,21 +419,21 @@ for (i in 5:nc)
   ll4[i]=sum(y*eta.hat.pls4-kappa(eta.hat.pls4))
   
   
-  beta.hat.pls2=my.plsglm.clean(xx.train, y, i)
+  beta.hat.pls2=plsglm.cb.simple(xx.train, y, i)
   pred.cb.pls2=kappa1(as.vector(as.matrix(xx.test)%*%beta.hat.pls2[-1]+beta.hat.pls2[1]))
   cor2S[i]=cor(pred.cb.pls2,y.test)
   rmse2S[i]=sqrt(mean((pred.cb.pls2*100-y.test*100)^2))
   eta.hat.pls2=as.vector(xx.train%*%beta.hat.pls2[-1]+beta.hat.pls2[1])
   ll2S[i]=sum(y*eta.hat.pls2-kappa(eta.hat.pls2))
   
-  beta.hat.pls3=my.plsglm.clean(xxx.train, y, i)
+  beta.hat.pls3=plsglm.cb.simple(xxx.train, y, i)
   pred.cb.pls3=kappa1(as.vector(as.matrix(xxx.test)%*%beta.hat.pls3[-1]+beta.hat.pls3[1]))
   cor3S[i]=cor(pred.cb.pls3,y.test)
   rmse3S[i]=sqrt(mean((pred.cb.pls3*100-y.test*100)^2))
   eta.hat.pls3=as.vector(xxx.train%*%beta.hat.pls3[-1]+beta.hat.pls3[1])
   ll3S[i]=sum(y*eta.hat.pls3-kappa(eta.hat.pls3))
   
-  beta.hat.pls4=my.plsglm.clean(xxxx.train, y, i)
+  beta.hat.pls4=plsglm.cb.simple(xxxx.train, y, i)
   pred.cb.pls4=kappa1(as.vector(as.matrix(xxxx.test)%*%beta.hat.pls4[-1]+beta.hat.pls4[1]))
   cor4S[i]=cor(pred.cb.pls4,y.test)
   rmse4S[i]=sqrt(mean((pred.cb.pls4*100-y.test*100)^2))

@@ -89,8 +89,19 @@ dev.off()
 #################################################
 
 #Fisher scoring
-kappa1 <- function(x) {1-1/x-1/(1-exp(x))}
-kappa2 <- function(x) {1/x^2+1/(2-2*cosh(x))}
+kappa1 <- function(x) {
+  k1 <- rep(1/2,length(x))
+  tt <- which(x!=0)
+  k1[tt] <- 1 - 1/(x[tt]) - 1/(1-exp(x[tt]))
+  return(k1)
+}
+
+kappa2 <- function(x) {
+  k2 <- rep(1/12,length(x))
+  tt <- which(x!=0)
+  k2[tt] <- 1/(x[tt])^2 + 1/(2-2*cosh(x[tt]))
+  return(k2)
+}
 
 fisher.scoring<-function(y,x,initial){
   beta0<-initial
@@ -102,11 +113,8 @@ fisher.scoring<-function(y,x,initial){
     
     kp=kappa1(eta)
     kpp=kappa2(eta)
-    
-    kp[which(kp<0.01)] <- 0.01
-    kp[which(kp>0.99)] <- 0.99
+  
     kpp[which(kpp<0.01)] <- 0.01
-    kpp[which(kpp>0.99)] <- 0.99
     
     W=kpp
     Z=x%*%beta0+(y-kp)/W
@@ -297,7 +305,7 @@ pdf("plsglm_model2.pdf",width=10,height=10)
 ggplot(data = df.pls2, aes(x = pred.pls2*100, y = y.test*100)) + theme(text = element_text(size = 40)) +labs(title = "PLSGLM with 2 levels") +
   theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
   geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
-  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.91")),"RMSE=8.04"),size=10)
+  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.91")),"RMSE=7.73"),size=10)
 dev.off()
 
 coef.pls2=rbind(c("intercept",beta.hat.pls2[1]),cbind(colnames(xx),beta.hat.pls2[-1]))[order(abs(beta.hat.pls2)),]
@@ -321,7 +329,7 @@ pdf("cb_model2.pdf",width=10,height=10)
 ggplot(data = df.hat2, aes(x = pred.hat2*100, y = y.test*100)) + theme(text = element_text(size = 40)) +labs(title = "GLM with 2 levels") +
   theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
   geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
-  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.92")),"RMSE=7.57"),size=10)
+  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.92")),"RMSE=7.54"),size=10)
 dev.off()
 
 sum(yy*eta.hat-kappa(eta.hat))
@@ -370,7 +378,7 @@ pdf("plsglm_model3.pdf",width=10,height=10)
 ggplot(data = df.pls3, aes(x = pred.pls3*100, y = y.test*100)) + theme(text = element_text(size = 40)) +labs(title = "PLSGLM with 3 levels") +
   theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
   geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
-  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.97")),"RMSE=4.12"),size=10)
+  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.98")),"RMSE=4.19"),size=10)
 dev.off()
 
 coef.pls3=rbind(c("intercept",beta.hat.pls3[1]),data.frame(colnames(xxx),beta.hat.pls3[-1]))[order(abs(beta.hat.pls3)),]

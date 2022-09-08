@@ -198,7 +198,7 @@ plslm <- function(X, Y, ncomp,
 
 
 # The next function implements PLSGLM with Continuous Bernoulli response
-# The parameter beta0 is the initialization, choosing NULL initializes at MLE 
+# The parameter beta0 is the initialization, choosing NULL initializes at zero 
 # The function allows for centering/scaling (TRUE by default)
 # The function allows for intercept (TRUE by default)
 
@@ -210,8 +210,19 @@ plsglm.cb <- function(X, Y, ncomp, beta0=NULL,
   if (verbose) print("Performing PLSGLM-NEW")
   
   # CB Likelihood
-  kappa1 <- function(x) {1-1/x-1/(1-exp(x))}
-  kappa2 <- function(x) {1/x^2+1/(2-2*cosh(x))}
+  kappa1 <- function(x) {
+    k1 <- rep(1/2,length(x))
+    tt <- which(x!=0)
+    k1[tt] <- 1 - 1/(x[tt]) - 1/(1-exp(x[tt]))
+    return(k1)
+  }
+  
+  kappa2 <- function(x) {
+    k2 <- rep(1/12,length(x))
+    tt <- which(x!=0)
+    k2[tt] <- 1/(x[tt])^2 + 1/(2-2*cosh(x[tt]))
+    return(k2)
+  }
   
   # Get variables
   X <- as.matrix(X)
@@ -290,12 +301,9 @@ plsglm.cb <- function(X, Y, ncomp, beta0=NULL,
       eta[,,m] <- X%*%beta[,,m]
       
       k.p[,,m] <- kappa1(eta[,,m])
-      k.p[,,m][which(k.p[,,m]<0.01)] <- 0.01
-      k.p[,,m][which(k.p[,,m]>0.99)] <- 0.99
       
       k.pp[,,m] <- kappa2(eta[,,m])
       k.pp[,,m][which(k.pp[,,m]<0.01)] <- 0.01
-      k.pp[,,m][which(k.pp[,,m]>0.99)] <- 0.99
       
       W[,,m] <- diag(as.vector(k.pp[,,m]))
       

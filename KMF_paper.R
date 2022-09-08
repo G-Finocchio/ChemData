@@ -2,10 +2,10 @@
 ## Read the data
 #######################
 
-x=data.matrix(read.table("Xtrain.txt",header=TRUE))
-x.test=data.frame(read.table("Xtest.txt",header=TRUE))
-y=as.vector(read.table("YTrain.txt",header=FALSE)[,1])
-y.test=as.vector(read.table("YTest.txt",header=FALSE)[,1])
+x=data.matrix(read.table("Data/Xtrain.txt",header=TRUE))
+x.test=data.frame(read.table("Data/Xtest.txt",header=TRUE))
+y=as.vector(read.table("Data/YTrain.txt",header=FALSE)[,1])
+y.test=as.vector(read.table("Data/YTest.txt",header=FALSE)[,1])
 
 #################################################
 ## Fit continuous Bernoulli and plot histogram
@@ -136,8 +136,8 @@ dev.off()
 ## Compare linear models with dummy coding and chemical descriptors
 #############################################################
 
-x=data.matrix(read.table("XtrainNScaled.txt",header=TRUE))
-x.test=data.frame(read.table("XtestNScaled.txt",header=TRUE))
+x=data.matrix(read.table("Data/XtrainNScaled.txt",header=TRUE))
+x.test=data.frame(read.table("Data/XtestNScaled.txt",header=TRUE))
 
 #add three artificial descriptors for additives
 xc=rbind(x,x.test)
@@ -241,7 +241,7 @@ sqrt(mean((pred.rf*100-y.test*100)^2))
 
 ########################################
 ## generalised PLS funciton
-source("my_repo.r")
+source("tools.r")
 my.plsglm.clean <- function(x, y, m.plsglm, 
                             beta0=NULL,
                             centering=TRUE, scaling=TRUE, intercept=TRUE,
@@ -274,6 +274,7 @@ xx=cbind(xcf,xx[,-1])
 #fit GPLS
 nc=28 
 beta.hat.pls2=my.plsglm.clean(xx, yy, nc,scaling=FALSE)
+gc()
 eta.hat.pls2=as.vector(xx%*%beta.hat.pls2[-1]+beta.hat.pls2[1])
 fit.pls2=kappa1(eta.hat.pls2)
 
@@ -313,8 +314,10 @@ for (j in 1:2)
 xxx=cbind(xx,xxx[,-1])
 
 # fit GPLS
+memory.limit(32000)
 nc=33
 beta.hat.pls3=my.plsglm.clean(xxx, yy, nc,scaling=FALSE)
+gc()
 eta.hat.pls3=as.vector(xxx%*%beta.hat.pls3[-1]+beta.hat.pls3[1])
 fit.pls3=kappa1(eta.hat.pls3)
 

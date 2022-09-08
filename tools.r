@@ -1,4 +1,4 @@
-# Functions can be accessed via the command source("my_repo.r")
+# Functions can be accessed via the command source("tools.r")
 
 
 # The next function computes the performance of a classification probability
@@ -1910,6 +1910,7 @@ my.plsglm <- function(X, Y, ncomp, beta0=NULL,
 
 
 # The next function implements a variation of PLSGLM
+# adapted to continuous Bernoulli variables
 
 my.plsglm.new <- function(X, Y, ncomp, beta0=NULL,
                           centering=TRUE, scaling=TRUE, intercept=TRUE,
@@ -1918,7 +1919,7 @@ my.plsglm.new <- function(X, Y, ncomp, beta0=NULL,
                           kappa2=function(x) {1/x^2+1/(2-2*cosh(x))},
                           verbose=FALSE){
   
-  print("Performing PLSGLM-NEW")
+  if (verbose) print("Performing PLSGLM-NEW")
   
   # Get variables
   X <- as.matrix(X)

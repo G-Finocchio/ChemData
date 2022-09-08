@@ -89,8 +89,8 @@ dev.off()
 #################################################
 
 #Fisher scoring
-kappa1<-function(x) 1/(1-exp(-x))-1/x
-kappa2<-function(x) 1/x^2-exp(x)/(1-exp(x))^2
+kappa1 <- function(x) {1-1/x-1/(1-exp(x))}
+kappa2 <- function(x) {1/x^2+1/(2-2*cosh(x))}
 
 fisher.scoring<-function(y,x,initial){
   beta0<-initial
@@ -99,12 +99,22 @@ fisher.scoring<-function(y,x,initial){
   repeat{
     counter=counter+1
     eta=as.vector(x%*%beta0)
-    W=kappa2(eta)
-    Z=x%*%beta0+(y-kappa1(eta))/W
+    
+    kp=kappa1(eta)
+    kpp=kappa2(eta)
+    
+    kp[which(kp<0.001)] <- 0.001
+    kp[which(kp>0.999)] <- 0.999
+    kpp[which(kpp<0.001)] <- 0.001
+    kpp[which(kpp>0.999)] <- 0.999
+    
+    W=kpp
+    Z=x%*%beta0+(y-kp)/W
     fit<-lm(Z~x-1,weights=W)
     beta1=fit$coef
     epsilon <- sqrt(sum((beta0-beta1)^2)/sum(beta0^2))
-    if(epsilon<=1e-6) break
+    print(paste("Epsilon: ", epsilon, sep=""))
+    if(epsilon<=0.05) break
     if(counter==100) {print("no convergence"); break}
     beta0 <- beta1
   }
@@ -126,7 +136,7 @@ sqrt(mean((pred.cb*100-y.test*100)^2))
 df.glm=data.frame(y.test,pred.cb)
 
 pdf("cb_model.pdf",width=10,height=10)
-ggplot(data = df.lm, aes(x = pred.cb*100, y = y.test*100)) + theme(text = element_text(size = 40)) +labs(title = "Generalised linear model") +
+ggplot(data = df.glm, aes(x = pred.cb*100, y = y.test*100)) + theme(text = element_text(size = 40)) +labs(title = "Generalised linear model") +
   theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
   geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
   annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.78")),"RMSE=12.6"),size=10)
@@ -245,7 +255,7 @@ source("tools.r")
 plsglm.cb.simple <- function(x, y, m.plsglm, 
                             beta0=NULL,
                             centering=TRUE, scaling=TRUE, intercept=TRUE,
-                            maxit=20, tol=0.1,
+                            maxit=20, tol=0.05,
                             verbose=FALSE){
   
   return(plsglm.cb(X=x, Y=y, ncomp=m.plsglm, 
@@ -275,6 +285,18 @@ eta.hat.pls2=as.vector(xx%*%beta.hat.pls2[-1]+beta.hat.pls2[1])
 fit.pls2=kappa1(eta.hat.pls2)
 
 plot(yy,fit.pls2)
+abline(0,1,lwd=3,col=2)
+
+pred.pls2 <- fit.pls2[-(1:length(y))]
+cor(pred.pls2,y.test)^2
+sqrt(mean((pred.pls2*100-y.test*100)^2))
+
+pdf("plsglm_model2.pdf",width=10,height=10)
+ggplot(data = df.lm, aes(x = pred.cb*100, y = y.test*100)) + theme(text = element_text(size = 40)) +labs(title = "Generalised linear model") +
+  theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
+  geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
+  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.78")),"RMSE=12.6"),size=10)
+dev.off()
 
 coef.pls2=rbind(c("intercept",beta.hat.pls2[1]),cbind(colnames(xx),beta.hat.pls2[-1]))[order(abs(beta.hat.pls2)),]
 coef.pls2[496:516,]
@@ -283,7 +305,14 @@ coef.pls2[496:516,]
 beta.hat=fisher.scoring(yy,xx,beta.hat.pls2)$beta.hat #has convergence problems due to many beta=0 weights become close to 0
 eta.hat=as.vector(xx%*%beta.hat[-1]+beta.hat[1])
 fit=kappa1(eta.hat)
+
 plot(yy,fit)
+abline(0,1,lwd=3,col=2)
+
+pred.hat <- fit[-(1:length(y))]
+cor(pred.hat,y.test)^2
+sqrt(mean((pred.hat*100-y.test*100)^2))
+
 sum(yy*eta.hat-kappa(eta.hat))
 rbind(c("intercept",beta.hat[1]),cbind(colnames(xx),beta.hat[-1]))[order(abs(beta.hat)),]
 
@@ -318,6 +347,11 @@ eta.hat.pls3=as.vector(xxx%*%beta.hat.pls3[-1]+beta.hat.pls3[1])
 fit.pls3=kappa1(eta.hat.pls3)
 
 plot(yy,fit.pls3)
+abline(0,1,lwd=3,col=2)
+
+pred.pls3 <- fit.pls3[-(1:length(y))]
+cor(pred.pls3,y.test)^2
+sqrt(mean((pred.pls3*100-y.test*100)^2))
 
 coef.pls3=rbind(c("intercept",beta.hat.pls3[1]),data.frame(colnames(xxx),beta.hat.pls3[-1]))[order(abs(beta.hat.pls3)),]
 coef.pls3[2186:2196,]
@@ -327,9 +361,17 @@ LL3=sum(yy*eta.hat.pls3-kappa(eta.hat.pls3))
 
 #fit GLM
 beta.hat=fisher.scoring(yy,xxx,beta.hat.pls3)$beta.hat #same convergence problems
+gc()
 eta.hat=as.vector(xxx%*%beta.hat[-1]+beta.hat[1])
 fit=kappa1(eta.hat)
 rbind(c("intercept",beta.hat[1]),data.frame(colnames(xxx),beta.hat[-1]))[order(abs(beta.hat)),]
+
+plot(yy,fit)
+abline(0,1,lwd=3,col=2)
+
+pred.hat <- fit[-(1:length(y))]
+cor(pred.hat,y.test)^2
+sqrt(mean((pred.hat*100-y.test*100)^2))
 
 #get all coefficients from the constraints
 coef.one=coef.pls3[2:41,]
@@ -374,10 +416,16 @@ xxxx=cbind(xxx,xxxx[,-1])
 # fit GPLS
 nc=29
 beta.hat.pls4=plsglm.cb.simple(xxxx, yy, nc,scaling=FALSE)
+gc()
 eta.hat.pls4=as.vector(xxxx%*%beta.hat.pls4[-1]+beta.hat.pls4[1])
 fit.pls4=kappa1(eta.hat.pls4)
 
 plot(yy,fit.pls4)
+abline(0,1,lwd=3,col=2)
+
+pred.pls4 <- fit.pls4[-(1:length(y))]
+cor(pred.pls4,y.test)^2
+sqrt(mean((pred.pls4*100-y.test*100)^2))
 
 coef.pls4=rbind(c("intercept",beta.hat.pls4[1]),cbind(colnames(xxxx),beta.hat.pls4[-1]))[order(abs(beta.hat.pls4)),]
 coef.pls4[3940:3960,]

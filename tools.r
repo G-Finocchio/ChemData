@@ -290,12 +290,12 @@ plsglm.cb <- function(X, Y, ncomp, beta0=NULL,
       eta[,,m] <- X%*%beta[,,m]
       
       k.p[,,m] <- kappa1(eta[,,m])
-      k.p[,,m][which(k.p[,,m]<0.01)] <- 0.01
-      k.p[,,m][which(k.p[,,m]>0.99)] <- 0.99
+      k.p[,,m][which(k.p[,,m]<0.001)] <- 0.001
+      k.p[,,m][which(k.p[,,m]>0.999)] <- 0.999
       
       k.pp[,,m] <- kappa2(eta[,,m])
-      k.pp[,,m][which(k.pp[,,m]<0.01)] <- 0.01
-      k.pp[,,m][which(k.pp[,,m]>0.99)] <- 0.99
+      k.pp[,,m][which(k.pp[,,m]<0.001)] <- 0.001
+      k.pp[,,m][which(k.pp[,,m]>0.999)] <- 0.999
       
       W[,,m] <- diag(as.vector(k.pp[,,m]))
       
@@ -373,6 +373,8 @@ plsglm.cb <- function(X, Y, ncomp, beta0=NULL,
       }
     }
   }
+  
+  gc()
   
   return(list(BETA=beta.tilde, 
               beta=beta, 

@@ -258,7 +258,7 @@ sqrt(mean((pred.rf*100-y.test*100)^2))
 ################################################
 
 ########################################
-## generalised PLS funciton
+## generalized PLS function
 source("tools.r")
 plsglm.cb.simple <- function(x, y, m.plsglm, 
                             beta0=NULL,
@@ -287,7 +287,7 @@ xx=cbind(xcf,xx[,-1])
 
 #fit GPLS
 nc=28 
-beta.hat.pls2=plsglm.cb.simple(xx, yy, nc,scaling=FALSE)
+beta.hat.pls2=plsglm.cb.simple(xx, yy, nc,scaling=TRUE)
 gc()
 eta.hat.pls2=as.vector(xx%*%beta.hat.pls2[-1]+beta.hat.pls2[1])
 fit.pls2=kappa1(eta.hat.pls2)
@@ -305,7 +305,7 @@ pdf("plsglm_model2.pdf",width=10,height=10)
 ggplot(data = df.pls2, aes(x = pred.pls2*100, y = y.test*100)) + theme(text = element_text(size = 40)) +labs(title = "PLSGLM with 2 levels") +
   theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
   geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
-  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.91")),"RMSE=7.73"),size=10)
+  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.92")),"RMSE=7.55"),size=10)
 dev.off()
 
 coef.pls2=rbind(c("intercept",beta.hat.pls2[1]),cbind(colnames(xx),beta.hat.pls2[-1]))[order(abs(beta.hat.pls2)),]
@@ -360,7 +360,7 @@ xxx=cbind(xx,xxx[,-1])
 # fit GPLS
 memory.limit(32000)
 nc=33
-beta.hat.pls3=plsglm.cb.simple(xxx, yy, nc,scaling=FALSE)
+beta.hat.pls3=plsglm.cb.simple(xxx, yy, nc,scaling=TRUE)
 gc()
 eta.hat.pls3=as.vector(xxx%*%beta.hat.pls3[-1]+beta.hat.pls3[1])
 fit.pls3=kappa1(eta.hat.pls3)
@@ -378,7 +378,7 @@ pdf("plsglm_model3.pdf",width=10,height=10)
 ggplot(data = df.pls3, aes(x = pred.pls3*100, y = y.test*100)) + theme(text = element_text(size = 40)) +labs(title = "PLSGLM with 3 levels") +
   theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
   geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
-  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.98")),"RMSE=4.19"),size=10)
+  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.98")),"RMSE=3.36"),size=10)
 dev.off()
 
 coef.pls3=rbind(c("intercept",beta.hat.pls3[1]),data.frame(colnames(xxx),beta.hat.pls3[-1]))[order(abs(beta.hat.pls3)),]
@@ -407,7 +407,7 @@ pdf("cb_model3.pdf",width=10,height=10)
 ggplot(data = df.hat3, aes(x = pred.hat3*100, y = y.test*100)) + theme(text = element_text(size = 40)) +labs(title = "GLM with 3 levels") +
   theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
   geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
-  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.99")),"RMSE=2.98"),size=10)
+  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.99")),"RMSE=2.99"),size=10)
 dev.off()
 
 #get all coefficients from the constraints
@@ -452,7 +452,7 @@ xxxx=cbind(xxx,xxxx[,-1])
 
 # fit GPLS
 nc=29
-beta.hat.pls4=plsglm.cb.simple(xxxx, yy, nc,scaling=FALSE)
+beta.hat.pls4=plsglm.cb.simple(xxxx, yy, nc,scaling=TRUE)
 gc()
 eta.hat.pls4=as.vector(xxxx%*%beta.hat.pls4[-1]+beta.hat.pls4[1])
 fit.pls4=kappa1(eta.hat.pls4)
@@ -463,6 +463,15 @@ abline(0,1,lwd=3,col=2)
 pred.pls4 <- fit.pls4[-(1:length(y))]
 cor(pred.pls4,y.test)^2
 sqrt(mean((pred.pls4*100-y.test*100)^2))
+
+df.pls4=data.frame(y.test,pred.pls4)
+
+pdf("plsglm_model4.pdf",width=10,height=10)
+ggplot(data = df.pls4, aes(x = pred.pls4*100, y = y.test*100)) + theme(text = element_text(size = 40)) +labs(title = "PLSGLM with 4 levels") +
+  theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
+  geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
+  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.98")),"RMSE=3.36"),size=10)
+dev.off()
 
 coef.pls4=rbind(c("intercept",beta.hat.pls4[1]),cbind(colnames(xxxx),beta.hat.pls4[-1]))[order(abs(beta.hat.pls4)),]
 coef.pls4[3940:3960,]

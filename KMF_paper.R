@@ -284,18 +284,20 @@ for (j in 1:3)
   for (i in (max(bb[j-1],0)+1):bb[j]) {xxp=xcf[,i]*xcf[,-c(1:bb[j])]; colnames(xxp)=paste(colnames(xcf)[i],colnames(xcf[,-c(1:bb[j])]),sep=":");  xx=cbind(xx,xxp)}
 xx=cbind(xcf,xx[,-1])
 
+xx.train=xx[1:nrow(x),]
+xx.test=xx[-c(1:nrow(x)),]
 
 #fit GPLS
 nc=28 
-beta.hat.pls2=plsglm.cb.simple(xx, yy, nc,scaling=TRUE)
+beta.hat.pls2=plsglm.cb.simple(xx.train, y, nc,scaling=TRUE)
 gc()
-eta.hat.pls2=as.vector(xx%*%beta.hat.pls2[-1]+beta.hat.pls2[1])
+eta.hat.pls2=as.vector(xx.train%*%beta.hat.pls2[-1]+beta.hat.pls2[1])
 fit.pls2=kappa1(eta.hat.pls2)
 
-plot(yy,fit.pls2)
+plot(y,fit.pls2)
 abline(0,1,lwd=3,col=2)
 
-pred.pls2 <- fit.pls2[-(1:length(y))]
+pred.pls2=kappa1(as.vector(xx.test%*%beta.hat.pls2[-1]+beta.hat.pls2[1]))
 cor(pred.pls2,y.test)^2
 sqrt(mean((pred.pls2*100-y.test*100)^2))
 
@@ -305,21 +307,21 @@ pdf("plsglm_model2.pdf",width=10,height=10)
 ggplot(data = df.pls2, aes(x = pred.pls2*100, y = y.test*100)) + theme(text = element_text(size = 40)) +labs(title = "PLSGLM with 2 levels") +
   theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
   geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
-  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.92")),"RMSE=7.55"),size=10)
+  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.88")),"RMSE=9.48"),size=10)
 dev.off()
 
 coef.pls2=rbind(c("intercept",beta.hat.pls2[1]),cbind(colnames(xx),beta.hat.pls2[-1]))[order(abs(beta.hat.pls2)),]
 coef.pls2[496:516,]
 
 #fit GLM
-beta.hat=fisher.scoring(yy,xx,beta.hat.pls2)$beta.hat #has convergence problems due to many beta=0 weights become close to 0
-eta.hat=as.vector(xx%*%beta.hat[-1]+beta.hat[1])
+beta.hat=fisher.scoring(y,xx.train,beta.hat.pls2)$beta.hat #has convergence problems due to many beta=0 weights become close to 0
+eta.hat=as.vector(xx.train%*%beta.hat[-1]+beta.hat[1])
 fit=kappa1(eta.hat)
 
-plot(yy,fit)
+plot(y,fit)
 abline(0,1,lwd=3,col=2)
 
-pred.hat2 <- fit[-(1:length(y))]
+pred.hat2=kappa1(as.vector(xx.test%*%beta.hat[-1]+beta.hat[1]))
 cor(pred.hat2,y.test)^2
 sqrt(mean((pred.hat2*100-y.test*100)^2))
 
@@ -329,15 +331,15 @@ pdf("cb_model2.pdf",width=10,height=10)
 ggplot(data = df.hat2, aes(x = pred.hat2*100, y = y.test*100)) + theme(text = element_text(size = 40)) +labs(title = "GLM with 2 levels") +
   theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
   geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
-  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.92")),"RMSE=7.54"),size=10)
+  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.88")),"RMSE=9.38"),size=10)
 dev.off()
 
-sum(yy*eta.hat-kappa(eta.hat))
+sum(y*eta.hat-kappa(eta.hat))
 rbind(c("intercept",beta.hat[1]),cbind(colnames(xx),beta.hat[-1]))[order(abs(beta.hat)),]
 
 # calculate the Log-likelihood
 kappa<-function(x) log((exp(x)-1)/x)
-LL2=sum(yy*eta.hat.pls2-kappa(eta.hat.pls2))
+LL2=sum(y*eta.hat.pls2-kappa(eta.hat.pls2))
 
 #############################
 #add three level combinations
@@ -357,18 +359,21 @@ for (j in 1:2)
 }
 xxx=cbind(xx,xxx[,-1])
 
+xxx.train=xxx[1:nrow(x),]
+xxx.test=xxx[-c(1:nrow(x)),]
+
 # fit GPLS
 memory.limit(32000)
 nc=33
-beta.hat.pls3=plsglm.cb.simple(xxx, yy, nc,scaling=TRUE)
+beta.hat.pls3=plsglm.cb.simple(xxx.train, y, nc,scaling=TRUE)
 gc()
-eta.hat.pls3=as.vector(xxx%*%beta.hat.pls3[-1]+beta.hat.pls3[1])
+eta.hat.pls3=as.vector(xxx.train%*%beta.hat.pls3[-1]+beta.hat.pls3[1])
 fit.pls3=kappa1(eta.hat.pls3)
 
-plot(yy,fit.pls3)
+plot(y,fit.pls3)
 abline(0,1,lwd=3,col=2)
 
-pred.pls3 <- fit.pls3[-(1:length(y))]
+pred.pls3=kappa1(as.vector(xxx.test%*%beta.hat.pls3[-1]+beta.hat.pls3[1]))
 cor(pred.pls3,y.test)^2
 sqrt(mean((pred.pls3*100-y.test*100)^2))
 
@@ -378,26 +383,26 @@ pdf("plsglm_model3.pdf",width=10,height=10)
 ggplot(data = df.pls3, aes(x = pred.pls3*100, y = y.test*100)) + theme(text = element_text(size = 40)) +labs(title = "PLSGLM with 3 levels") +
   theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
   geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
-  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.98")),"RMSE=3.36"),size=10)
+  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.71")),"RMSE=14.78"),size=10)
 dev.off()
 
 coef.pls3=rbind(c("intercept",beta.hat.pls3[1]),data.frame(colnames(xxx),beta.hat.pls3[-1]))[order(abs(beta.hat.pls3)),]
 coef.pls3[2186:2196,]
 
 # calculate the Log-likelihood
-LL3=sum(yy*eta.hat.pls3-kappa(eta.hat.pls3))
+LL3=sum(y*eta.hat.pls3-kappa(eta.hat.pls3))
 
 #fit GLM
-beta.hat=fisher.scoring(yy,xxx,beta.hat.pls3)$beta.hat #same convergence problems
+beta.hat=fisher.scoring(y,xxx.train,beta.hat.pls3)$beta.hat #same convergence problems
 gc()
-eta.hat=as.vector(xxx%*%beta.hat[-1]+beta.hat[1])
+eta.hat=as.vector(xxx.train%*%beta.hat[-1]+beta.hat[1])
 fit=kappa1(eta.hat)
-rbind(c("intercept",beta.hat[1]),data.frame(colnames(xxx),beta.hat[-1]))[order(abs(beta.hat)),]
+rbind(c("intercept",beta.hat[1]),data.frame(colnames(xxx.train),beta.hat[-1]))[order(abs(beta.hat)),]
 
-plot(yy,fit)
+plot(y,fit)
 abline(0,1,lwd=3,col=2)
 
-pred.hat3 <- fit[-(1:length(y))]
+pred.hat3=kappa1(as.vector(xxx.test%*%beta.hat[-1]+beta.hat[1]))
 cor(pred.hat3,y.test)^2
 sqrt(mean((pred.hat3*100-y.test*100)^2))
 
@@ -450,17 +455,20 @@ xxxx=rep(NA,nrow(xcf))
 for (i in 1:21) {xxxxp=xcf[,i]*xxx1[,1597:1680];colnames(xxxxp)=paste(colnames(xcf)[i],colnames(xxx1)[1597:1680],sep=":"); xxxx=cbind(xxxx,xxxxp)}
 xxxx=cbind(xxx,xxxx[,-1])
 
+xxxx.train=xxxx[1:nrow(x),]
+xxxx.test=xxxx[-c(1:nrow(x)),]
+
 # fit GPLS
 nc=29
-beta.hat.pls4=plsglm.cb.simple(xxxx, yy, nc,scaling=TRUE)
+beta.hat.pls4=plsglm.cb.simple(xxxx.train, y, nc,scaling=TRUE)
 gc()
-eta.hat.pls4=as.vector(xxxx%*%beta.hat.pls4[-1]+beta.hat.pls4[1])
+eta.hat.pls4=as.vector(xxxx.train%*%beta.hat.pls4[-1]+beta.hat.pls4[1])
 fit.pls4=kappa1(eta.hat.pls4)
 
-plot(yy,fit.pls4)
+plot(y,fit.pls4)
 abline(0,1,lwd=3,col=2)
 
-pred.pls4 <- fit.pls4[-(1:length(y))]
+pred.pls4=kappa1(as.vector(xxxx.test%*%beta.hat.pls4[-1]+beta.hat.pls4[1]))
 cor(pred.pls4,y.test)^2
 sqrt(mean((pred.pls4*100-y.test*100)^2))
 
@@ -470,14 +478,14 @@ pdf("plsglm_model4.pdf",width=10,height=10)
 ggplot(data = df.pls4, aes(x = pred.pls4*100, y = y.test*100)) + theme(text = element_text(size = 40)) +labs(title = "PLSGLM with 4 levels") +
   theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
   geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
-  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.98")),"RMSE=3.36"),size=10)
+  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.15")),"RMSE=28.70"),size=10)
 dev.off()
 
 coef.pls4=rbind(c("intercept",beta.hat.pls4[1]),cbind(colnames(xxxx),beta.hat.pls4[-1]))[order(abs(beta.hat.pls4)),]
 coef.pls4[3940:3960,]
 
 # calculate the Log-likelihood
-LL4=sum(yy*eta.hat.pls4-kappa(eta.hat.pls4))
+LL4=sum(y*eta.hat.pls4-kappa(eta.hat.pls4))
 
 
 #find best number of components/ CV on test set with and without scaling
@@ -487,10 +495,12 @@ xxx.train=xxx[1:nrow(x),]
 xxx.test=xxx[-c(1:nrow(x)),]
 xx.train=xx[1:nrow(x),]
 xx.test=xx[-c(1:nrow(x)),]
-nc=c(6,12,18,24,30,36,42)
-cor2=rmse2=cor3=rmse3=cor4=rmse4=ll2=ll3=ll4=rep(NA,length(nc))
+nc=(2:12)*3
+cor2=rmse2=cor3=rmse3=cor4=rmse4=ll2=ll3=ll4=rep(NA,max(nc))
 for (i in nc)
 {
+  print(paste("Checking",i,"comps..."))
+  
   beta.hat.pls2=plsglm.cb.simple(xx.train, y, i,scaling=TRUE)
   gc()
   pred.cb.pls2=kappa1(as.vector(as.matrix(xx.test)%*%beta.hat.pls2[-1]+beta.hat.pls2[1]))
@@ -516,4 +526,25 @@ for (i in nc)
   ll4[i]=sum(y*eta.hat.pls4-kappa(eta.hat.pls4))
 
 }
+
+plot(c(1,max(nc)),c(0,1),col="white",main="CORR")
+points(cor2,col=2)
+points(cor3,col=3)
+points(cor4,col=4)
+legend("topleft", col=c(2,3,4), lwd=2, lty=1, cex=1, c("2-level","3-level","4-level") )
+
+plot(c(1,max(nc)),c(0,50),col="white",main="RSME")
+points(rmse2,col=2)
+points(rmse3,col=3)
+points(rmse4,col=4)
+legend("topleft", col=c(2,3,4), lwd=2, lty=1, cex=1, c("2-level","3-level","4-level") )
+
+write(cor2, file="cor2.txt", sep="\n")
+write(cor3, file="cor3.txt", sep="\n")
+write(cor4, file="cor4.txt", sep="\n")
+
+write(rmse2, file="rmse2.txt", sep="\n")
+write(rmse3, file="rmse3.txt", sep="\n")
+write(rmse4, file="rmse4.txt", sep="\n")
+
 

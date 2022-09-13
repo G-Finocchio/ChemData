@@ -1,6 +1,101 @@
 # Functions can be accessed via the command source("tools.r")
 
 
+# Functions for the textbox in ggplot
+
+element_textbox <- function(...) {
+  el <- element_text(...)
+  class(el) <- c("element_textbox", class(el))
+  el
+}
+
+element_grob.element_textbox <- function(element, ...) {
+  text_grob <- NextMethod()
+  rect_grob <- element_grob(calc_element("strip.background", theme_bw()))
+  
+  ggplot2:::absoluteGrob(
+    grid::gList(
+      element_grob(calc_element("strip.background", theme_bw())),
+      text_grob
+    ),
+    height = grid::grobHeight(text_grob), 
+    width = grid::unit(1, "npc")
+  )
+}
+
+
+
+
+# Continuous Bernoulli likelihood
+
+kappa <- function(x) log((exp(x)-1)/x)
+
+kappa1 <- function(x) {
+  k1 <- rep(1/2,length(x))
+  tt <- which(x!=0)
+  k1[tt] <- 1 - 1/(x[tt]) - 1/(1-exp(x[tt]))
+  return(k1)
+}
+
+kappa2 <- function(x) {
+  k2 <- rep(1/12,length(x))
+  tt <- which(x!=0)
+  k2[tt] <- 1/(x[tt])^2 + 1/(2-2*cosh(x[tt]))
+  return(k2)
+}
+
+
+
+
+# Fisher scoring
+
+fisher.scoring <- function(y,x,initial){
+  
+  # CB likelihood
+  kappa1 <- function(x) {
+    k1 <- rep(1/2,length(x))
+    tt <- which(x!=0)
+    k1[tt] <- 1 - 1/(x[tt]) - 1/(1-exp(x[tt]))
+    return(k1)
+  }
+  
+  kappa2 <- function(x) {
+    k2 <- rep(1/12,length(x))
+    tt <- which(x!=0)
+    k2[tt] <- 1/(x[tt])^2 + 1/(2-2*cosh(x[tt]))
+    return(k2)
+  }
+  
+  # Initialization
+  beta0 <- initial
+  
+  # Main loop
+  x <- cbind(rep(1,nrow(x)),x)
+  counter <- 0
+  repeat{
+    counter <- counter+1
+    eta <- as.vector(x%*%beta0)
+    
+    kp <- kappa1(eta)
+    kpp <- kappa2(eta)
+    
+    kpp[which(kpp<0.01)] <- 0.01
+    
+    W <- kpp
+    Z <- x%*%beta0+(y-kp)/W
+    fit <- lm(Z~x-1,weights=W)
+    beta1 <- fit$coef
+    epsilon <- sqrt(sum((beta0-beta1)^2)/sum(beta0^2))
+    print(paste("Epsilon: ", epsilon, sep=""))
+    if(epsilon<=0.05) break
+    if(counter==100) {print("no convergence"); break}
+    beta0 <- beta1
+  }
+  list(beta.hat=as.vector(beta1),zstat=summary(fit)[["coefficients"]][, "t value"])
+}
+
+
+
 
 # The next function implements Partial Least Squares on
 # uni/multivariate response Y and design X using KERNELPLS
@@ -389,5 +484,22 @@ plsglm.cb <- function(X, Y, ncomp, beta0=NULL,
               Z=Z, W=W, 
               R=R,
               it=it.stop))
+}
+
+
+
+# Simplified implementation of PLSGLM-CB
+
+plsglm.cb.simple <- function(x, y, m.plsglm, 
+                             beta0=NULL,
+                             centering=TRUE, scaling=TRUE, intercept=TRUE,
+                             maxit=20, tol=0.05,
+                             verbose=FALSE){
+  
+  return(plsglm.cb(X=x, Y=y, ncomp=m.plsglm, 
+                   beta0=beta0,
+                   centering=centering, scaling=scaling, intercept=intercept,
+                   maxit=maxit, tol=tol,
+                   verbose=verbose)$BETA[,,m.plsglm])
 }
 

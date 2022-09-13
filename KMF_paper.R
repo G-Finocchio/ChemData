@@ -1,12 +1,8 @@
-#######################
-## 0. GLOBAL IMPORTS
-#######################
-source("tools.r")
-library(ggplot2)
-
 ######################################################################
 ## 1. COMPARISON OF LINEAR AND CONTINUOUS BERNOULLI MODELS
 ######################################################################
+source("tools.r")
+library(ggplot2)
 
 #######################
 ## Data processing
@@ -110,6 +106,8 @@ dev.off()
 ######################################################################
 ## 2. COMPARISON BETWEEN DUMMY CODING AND CHEMICAL DESCRIPTORS
 ######################################################################
+source("tools.r")
+library(ggplot2)
 
 #######################
 ## Data processing
@@ -167,7 +165,7 @@ xcf <- xcf[,-b]
 xf <- xcf[1:nrow(x),]
 xf.test <- xcf[-c(1:nrow(x)),]
 
-# Mixed terms with 2-level combinations
+# Mixed terms with 2-levels combinations
 xx <- rep(1,nrow(xcf))
 bb <- cumsum(a-1)
 for (j in 1:3) {
@@ -182,8 +180,7 @@ xx <- cbind(xcf,xx[,-1])
 xx.train <- xx[1:nrow(x),]
 xx.test <- xx[-c(1:nrow(x)),]
 
-
-# Mixed terms with 3-level combinations
+# Mixed terms with 3-levels combinations
 xcf1 <- xcf
 colnames(xcf1) <- c(rep("additive",21),rep("aryl_halide",14),rep("base",2),rep("ligand",3))
 xx1 <- xx[,-c(1:40)]
@@ -202,6 +199,20 @@ xxx <- cbind(xx,xxx[,-1])
 
 xxx.train <- xxx[1:nrow(x),]
 xxx.test <- xxx[-c(1:nrow(x)),]
+
+# Mixed terms with 4-levels combinations
+xxx1 <- xxx[,-c(1:515)]
+
+xxxx <- rep(NA,nrow(xcf))
+for (i in 1:21) {
+  xxxxp <- xcf[,i]*xxx1[,1597:1680]
+  colnames(xxxxp) <- paste(colnames(xcf)[i],colnames(xxx1)[1597:1680],sep=":")
+  xxxx <- cbind(xxxx,xxxxp)
+}
+xxxx <- cbind(xxx,xxxx[,-1])
+
+xxxx.train <- xxxx[1:nrow(x),]
+xxxx.test <- xxxx[-c(1:nrow(x)),]
 
 #######################
 ## Linear models
@@ -258,7 +269,7 @@ sqrt(mean((pred.rf*100-y.test*100)^2))
 ## PLSGLM on 2-level model
 ############################
 
-nc <- 28 
+nc <- 30
 beta.hat.pls2 <- plsglm.cb.simple(xx.train, y, nc,scaling=TRUE)
 gc()
 
@@ -282,7 +293,7 @@ ggplot(data = df.pls2, aes(x = pred.pls2*100, y = y.test*100)) + theme(text = el
                                                   paste("RMSE:",round(rmse.pls2,2))), size=10)
 dev.off()
 
-coef.pls2=rbind(c("intercept",beta.hat.pls2[1]),cbind(colnames(xx),beta.hat.pls2[-1]))[order(abs(beta.hat.pls2)),]
+coef.pls2 <- rbind(c("intercept",beta.hat.pls2[1]),cbind(colnames(xx),beta.hat.pls2[-1]))[order(abs(beta.hat.pls2)),]
 coef.pls2[496:516,]
 
 ############################
@@ -312,7 +323,6 @@ ggplot(data = df.hat2, aes(x = pred.hat2*100, y = y.test*100)) + theme(text = el
                                                   paste("RMSE:",round(rmse.hat2,2))), size=10)
 dev.off()
 
-sum(y*eta.hat2-kappa(eta.hat2))
 rbind(c("intercept",beta.hat2[1]),cbind(colnames(xx),beta.hat2[-1]))[order(abs(beta.hat2)),]
 
 ############################
@@ -321,7 +331,7 @@ rbind(c("intercept",beta.hat2[1]),cbind(colnames(xx),beta.hat2[-1]))[order(abs(b
 
 memory.limit(32000)
 
-nc=33
+nc <- 30
 beta.hat.pls3 <- plsglm.cb.simple(xxx.train, y, nc,scaling=TRUE)
 gc()
 
@@ -345,8 +355,39 @@ ggplot(data = df.pls3, aes(x = pred.pls3*100, y = y.test*100)) + theme(text = el
                                                   paste("RMSE:",round(rmse.pls3,2))), size=10)
 dev.off()
 
-coef.pls3=rbind(c("intercept",beta.hat.pls3[1]),data.frame(colnames(xxx),beta.hat.pls3[-1]))[order(abs(beta.hat.pls3)),]
+coef.pls3 <- rbind(c("intercept",beta.hat.pls3[1]),data.frame(colnames(xxx),beta.hat.pls3[-1]))[order(abs(beta.hat.pls3)),]
 coef.pls3[2186:2196,]
+
+# Get all coefficients from the constraints
+coef.one <- coef.pls3[2:41,]
+for (i in 1:4) {
+  ind <- grepl(colnames(xs)[i],coef.one[,1],fixed=TRUE)
+  coef.one <- rbind(coef.one,c(paste(colnames(xs[i]),"last"),-sum(as.numeric(coef.one[ind,2]))))
+}
+
+coef.two <- coef.pls3[c(42:516),]
+for (k in 1:4){
+  for (j in 1:3)
+    for (i in (max(bb[k-1],0)+1):bb[k])
+    { 
+      ind <- grepl(paste(colnames(xf)[i],(colnames(xs)[-k])[j],sep=":"),coef.two[,1],fixed=TRUE)
+      if(sum(ind)!=0) coef.two <- rbind(coef.two,c(paste(paste(colnames(xf)[i],(colnames(xs)[-k])[j],sep=":"),"last"),-sum(as.numeric(coef.two[ind,2]))))
+    }
+}
+
+coef.two.rev <- coef.pls3[c(42:516),]
+ct.s <- strsplit(coef.two.rev[,1], ":")
+for (i in 1:length(ct.s)) {coef.two.rev[i,1]=paste(ct.s[[i]][2],ct.s[[i]][1],sep=":")}
+
+for (k in 1:4){
+  for (j in 1:3)
+    for (i in (max(bb[k-1],0)+1):bb[k])
+    { 
+      ind <- grepl(paste(colnames(xf)[i],(colnames(xs)[-k])[j],sep=":"),coef.two.rev[,1],fixed=TRUE)
+      if(sum(ind)!=0) coef.two.rev <- rbind(coef.two.rev,c(paste(paste(colnames(xf)[i],(colnames(xs)[-k])[j],sep=":"),"last"),-sum(as.numeric(coef.two.rev[ind,2]))))
+    }
+}
+coef.two <- rbind(coef.two,coef.two.rev[476:502,])
 
 ############################
 ## GLM on 3-level model
@@ -375,130 +416,212 @@ dev.off()
 
 rbind(c("intercept",beta.hat3[1]),data.frame(colnames(xxx.train),beta.hat3[-1]))[order(abs(beta.hat3)),]
 
-#get all coefficients from the constraints
-coef.one <- coef.pls3[2:41,]
-for (i in 1:4) {ind=grepl(colnames(xs)[i],coef.one[,1],fixed=TRUE); coef.one=rbind(coef.one,c(paste(colnames(xs[i]),"last"),-sum(as.numeric(coef.one[ind,2]))))}
-
-coef.two=coef.pls3[c(42:516),]
-for (k in 1:4){
-  for (j in 1:3)
-for (i in (max(bb[k-1],0)+1):bb[k])
- { 
-ind=grepl(paste(colnames(xf)[i],(colnames(xs)[-k])[j],sep=":"),coef.two[,1],fixed=TRUE); if(sum(ind)!=0) coef.two=rbind(coef.two,c(paste(paste(colnames(xf)[i],(colnames(xs)[-k])[j],sep=":"),"last"),-sum(as.numeric(coef.two[ind,2]))))
-}
-}
-
-coef.two.rev=coef.pls3[c(42:516),]
-ct.s=strsplit(coef.two.rev[,1], ":")
-for (i in 1:length(ct.s)) {coef.two.rev[i,1]=paste(ct.s[[i]][2],ct.s[[i]][1],sep=":")}
-
-for (k in 1:4){
-  for (j in 1:3)
-    for (i in (max(bb[k-1],0)+1):bb[k])
-    { 
-      ind=grepl(paste(colnames(xf)[i],(colnames(xs)[-k])[j],sep=":"),coef.two.rev[,1],fixed=TRUE); if(sum(ind)!=0) coef.two.rev=rbind(coef.two.rev,c(paste(paste(colnames(xf)[i],(colnames(xs)[-k])[j],sep=":"),"last"),-sum(as.numeric(coef.two.rev[ind,2]))))
-    }
-}
-coef.two=rbind(coef.two,coef.two.rev[476:502,])
-
-#need to add three interactions, but they seem to be small as well
-
-coef.xxx=rbind(c("intercept",beta.hat[1]),coef.one,coef.two,coef.pls3[-c(1:516),])
+coef.xxx <- rbind(c("intercept",beta.hat3[1]),coef.one,coef.two,coef.pls3[-c(1:516),])
 (coef.xxx[order(abs(as.numeric(coef.xxx[,2]))),])[2300:2320,]
 
-####################################
-## add four levels combinations
-####################################
-xxx1=xxx[,-c(1:515)]
+############################
+## PLSGLM on 4-level model
+############################
 
-xxxx=rep(NA,nrow(xcf))
-for (i in 1:21) {xxxxp=xcf[,i]*xxx1[,1597:1680];colnames(xxxxp)=paste(colnames(xcf)[i],colnames(xxx1)[1597:1680],sep=":"); xxxx=cbind(xxxx,xxxxp)}
-xxxx=cbind(xxx,xxxx[,-1])
-
-xxxx.train=xxxx[1:nrow(x),]
-xxxx.test=xxxx[-c(1:nrow(x)),]
-
-# fit GPLS
-nc=29
-beta.hat.pls4=plsglm.cb.simple(xxxx.train, y, nc,scaling=TRUE)
+nc <- 30
+beta.hat.pls4 <- plsglm.cb.simple(xxxx.train, y, nc,scaling=TRUE)
 gc()
-eta.hat.pls4=as.vector(xxxx.train%*%beta.hat.pls4[-1]+beta.hat.pls4[1])
-fit.pls4=kappa1(eta.hat.pls4)
+eta.hat.pls4 <- as.vector(xxxx.train%*%beta.hat.pls4[-1]+beta.hat.pls4[1])
+fit.pls4 <- kappa1(eta.hat.pls4)
+ll.pls4 <- sum(y*eta.hat.pls4-kappa(eta.hat.pls4))
 
-plot(y,fit.pls4)
-abline(0,1,lwd=3,col=2)
+pred.pls4 <- kappa1(as.vector(xxxx.test%*%beta.hat.pls4[-1]+beta.hat.pls4[1]))
+rsq.pls4 <- cor(pred.pls4,y.test)^2
+rmse.pls4 <- sqrt(mean((pred.pls4*100-y.test*100)^2))
 
-pred.pls4=kappa1(as.vector(xxxx.test%*%beta.hat.pls4[-1]+beta.hat.pls4[1]))
-cor(pred.pls4,y.test)^2
-sqrt(mean((pred.pls4*100-y.test*100)^2))
-
-df.pls4=data.frame(y.test,pred.pls4)
+df.pls4 <- data.frame(y.test,pred.pls4)
 
 pdf("plsglm_model4.pdf",width=10,height=10)
 ggplot(data = df.pls4, aes(x = pred.pls4*100, y = y.test*100)) + theme(text = element_text(size = 40)) +labs(title = "PLSGLM with 4 levels") +
   theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
   geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
-  annotate("text", x=c(-35,-28), y=c(95,89), label= c(expression(paste(R^2,"=0.15")),"RMSE=28.70"),size=10)
+  annotate("text",x=c(-35,-28),y=c(95,89),label=c(paste("R^2:",round(rsq.pls4,2)),
+                                                  paste("RMSE:",round(rmse.pls4,2))), size=10)
 dev.off()
 
-coef.pls4=rbind(c("intercept",beta.hat.pls4[1]),cbind(colnames(xxxx),beta.hat.pls4[-1]))[order(abs(beta.hat.pls4)),]
+coef.pls4 <- rbind(c("intercept",beta.hat.pls4[1]),cbind(colnames(xxxx),beta.hat.pls4[-1]))[order(abs(beta.hat.pls4)),]
 coef.pls4[3940:3960,]
 
-# calculate the Log-likelihood
-LL4=sum(y*eta.hat.pls4-kappa(eta.hat.pls4))
 
 
-#find best number of components/ CV on test set with and without scaling
-xxxx.train=xxxx[1:nrow(x),]
-xxxx.test=xxxx[-c(1:nrow(x)),]
-xxx.train=xxx[1:nrow(x),]
-xxx.test=xxx[-c(1:nrow(x)),]
-xx.train=xx[1:nrow(x),]
-xx.test=xx[-c(1:nrow(x)),]
-nc=(2:12)*3
-cor2=rmse2=cor3=rmse3=cor4=rmse4=ll2=ll3=ll4=rep(NA,max(nc))
-for (i in nc)
+######################################################################
+## 3. MODEL SELECTION FOR PLSGLM WITH DIFFERENT LEVELS
+######################################################################
+source("tools.r")
+library(ggplot2)
+
+memory.limit(32000)
+
+#######################
+## Data processing
+#######################
+
+# Read data
+x <- data.matrix(read.table("Data/XtrainNScaled.txt",header=TRUE))
+x.test <- data.frame(read.table("Data/XtestNScaled.txt",header=TRUE))
+y <- as.vector(read.table("Data/YTrain.txt",header=FALSE)[,1])
+y.test <- as.vector(read.table("Data/YTest.txt",header=FALSE)[,1])
+
+# Add three artificial descriptors for additives
+xc <- rbind(x,x.test)
+set.seed(2134)
+c1 <- factor(xc[,1])
+c2 <- factor(xc[,3])
+c3 <- factor(xc[,4])
+levels(c1) <- runif(22)
+levels(c2) <- rnorm(22)
+levels(c3) <- runif(22)
+xc <- cbind(cbind(as.numeric(c1),as.numeric(c2),as.numeric(c3)),xc)
+colnames(xc)[1:3] <- c("add_new1","add_new2","add_new3")
+
+xs <- xc[,c(1,23,50,60)]
+colnames(xs) <- c("additive","aryl_halide","base","ligand")
+
+a <- rep(NA,ncol(xs))
+for (i in 1:ncol(xs)) a[i] <- length(unique(xs[,i]))
+xcf <- matrix(NA,nrow(xs),sum(a))
+b <- cumsum(a)
+colnames(xcf) <- rep(colnames(xs),times=a)
+colnum <- order(unique(xs[,1]))
+for (i in 2:ncol(xs)) colnum <- c(colnum,order(unique(xs[,i])))
+colnames(xcf) <- paste(colnames(xcf),colnum)
+
+for (i in 1:nrow(xs))
 {
+  for (j in 1:length(a))
+  {
+    res <- rep(0, a[j])
+    where <- match( xs[i,j], unique(xs[,j]) )
+    res[ where ] <- 1 
+    xcf[i,(max(b[j-1],0)+1):b[j]] <- res
+  }
+}
+
+for (i in 1:length(b))
+{
+  ind <- match(xcf[,b[i]],1)==1
+  xcf[ind,(max(b[i-1],0)+1):b[i]] <- -1
+}
+
+xcf <- xcf[,-b]
+
+xf <- xcf[1:nrow(x),]
+xf.test <- xcf[-c(1:nrow(x)),]
+
+# Mixed terms with 2-levels combinations
+xx <- rep(1,nrow(xcf))
+bb <- cumsum(a-1)
+for (j in 1:3) {
+  for (i in (max(bb[j-1],0)+1):bb[j]) {
+    xxp <- xcf[,i]*xcf[,-c(1:bb[j])]
+    colnames(xxp) <- paste(colnames(xcf)[i],colnames(xcf[,-c(1:bb[j])]),sep=":")
+    xx <- cbind(xx,xxp)
+  }
+}
+xx <- cbind(xcf,xx[,-1])
+
+xx.train <- xx[1:nrow(x),]
+xx.test <- xx[-c(1:nrow(x)),]
+
+# Mixed terms with 3-levels combinations
+xcf1 <- xcf
+colnames(xcf1) <- c(rep("additive",21),rep("aryl_halide",14),rep("base",2),rep("ligand",3))
+xx1 <- xx[,-c(1:40)]
+
+xxx <- rep(1,nrow(xcf))
+ind <- rep(TRUE,ncol(xx1))
+for (j in 1:2) {
+  ind <- as.logical((!grepl(colnames(xcf1)[bb[j]],colnames(xx1)))*(ind))
+  for (i in (max(bb[j-1],0)+1):bb[j]) {
+    xxxp <- xcf[,i]*xx1[,ind]
+    colnames(xxxp) <- paste(colnames(xcf)[i],colnames(xx1)[ind],sep=":")
+    xxx <- cbind(xxx,xxxp)
+  }
+}
+xxx <- cbind(xx,xxx[,-1])
+
+xxx.train <- xxx[1:nrow(x),]
+xxx.test <- xxx[-c(1:nrow(x)),]
+
+# Mixed terms with 4-levels combinations
+xxx1 <- xxx[,-c(1:515)]
+
+xxxx <- rep(NA,nrow(xcf))
+for (i in 1:21) {
+  xxxxp <- xcf[,i]*xxx1[,1597:1680]
+  colnames(xxxxp) <- paste(colnames(xcf)[i],colnames(xxx1)[1597:1680],sep=":")
+  xxxx <- cbind(xxxx,xxxxp)
+}
+xxxx <- cbind(xxx,xxxx[,-1])
+
+xxxx.train <- xxxx[1:nrow(x),]
+xxxx.test <- xxxx[-c(1:nrow(x)),]
+
+#######################
+## PLSGLM with CV
+#######################
+
+nc <- (1:7)*6
+cor2 <- rmse2 <- cor3 <- rmse3 <- cor4 <- rmse4 <- ll2 <- ll3 <- ll4 <- rep(NA,max(nc))
+
+for (i in nc) {
+  
   print(paste("Checking",i,"comps..."))
   
-  beta.hat.pls2=plsglm.cb.simple(xx.train, y, i,scaling=TRUE)
+  beta.hat.pls2 <- plsglm.cb.simple(xx.train, y, i, scaling=TRUE)
   gc()
-  pred.cb.pls2=kappa1(as.vector(as.matrix(xx.test)%*%beta.hat.pls2[-1]+beta.hat.pls2[1]))
-  cor2[i]=cor(pred.cb.pls2,y.test)
-  rmse2[i]=sqrt(mean((pred.cb.pls2*100-y.test*100)^2))
-  eta.hat.pls2=as.vector(xx.train%*%beta.hat.pls2[-1]+beta.hat.pls2[1])
-  ll2[i]=sum(y*eta.hat.pls2-kappa(eta.hat.pls2))
+  pred.cb.pls2 <- kappa1(as.vector(as.matrix(xx.test)%*%beta.hat.pls2[-1]+beta.hat.pls2[1]))
+  cor2[i] <- cor(pred.cb.pls2,y.test)
+  rmse2[i] <- sqrt(mean((pred.cb.pls2*100-y.test*100)^2))
+  eta.hat.pls2 <- as.vector(xx.train%*%beta.hat.pls2[-1]+beta.hat.pls2[1])
+  ll2[i] <- sum(y*eta.hat.pls2-kappa(eta.hat.pls2))
   
-  beta.hat.pls3=plsglm.cb.simple(xxx.train, y, i,scaling=TRUE)
+  beta.hat.pls3 <- plsglm.cb.simple(xxx.train, y, i, scaling=TRUE)
   gc()
-  pred.cb.pls3=kappa1(as.vector(as.matrix(xxx.test)%*%beta.hat.pls3[-1]+beta.hat.pls3[1]))
-  cor3[i]=cor(pred.cb.pls3,y.test)
-  rmse3[i]=sqrt(mean((pred.cb.pls3*100-y.test*100)^2))
-  eta.hat.pls3=as.vector(xxx.train%*%beta.hat.pls3[-1]+beta.hat.pls3[1])
-  ll3[i]=sum(y*eta.hat.pls3-kappa(eta.hat.pls3))
+  pred.cb.pls3 <- kappa1(as.vector(as.matrix(xxx.test)%*%beta.hat.pls3[-1]+beta.hat.pls3[1]))
+  cor3[i] <- cor(pred.cb.pls3,y.test)
+  rmse3[i] <- sqrt(mean((pred.cb.pls3*100-y.test*100)^2))
+  eta.hat.pls3 <- as.vector(xxx.train%*%beta.hat.pls3[-1]+beta.hat.pls3[1])
+  ll3[i] <- sum(y*eta.hat.pls3-kappa(eta.hat.pls3))
   
-  beta.hat.pls4=plsglm.cb.simple(xxxx.train, y, i,scaling=TRUE)
+  beta.hat.pls4 <- plsglm.cb.simple(xxxx.train, y, i, scaling=TRUE)
   gc()
-  pred.cb.pls4=kappa1(as.vector(as.matrix(xxxx.test)%*%beta.hat.pls4[-1]+beta.hat.pls4[1]))
-  cor4[i]=cor(pred.cb.pls4,y.test)
-  rmse4[i]=sqrt(mean((pred.cb.pls4*100-y.test*100)^2))
-  eta.hat.pls4=as.vector(xxxx.train%*%beta.hat.pls4[-1]+beta.hat.pls4[1])
-  ll4[i]=sum(y*eta.hat.pls4-kappa(eta.hat.pls4))
+  pred.cb.pls4 <- kappa1(as.vector(as.matrix(xxxx.test)%*%beta.hat.pls4[-1]+beta.hat.pls4[1]))
+  cor4[i] <- cor(pred.cb.pls4,y.test)
+  rmse4[i] <- sqrt(mean((pred.cb.pls4*100-y.test*100)^2))
+  eta.hat.pls4 <- as.vector(xxxx.train%*%beta.hat.pls4[-1]+beta.hat.pls4[1])
+  ll4[i] <- sum(y*eta.hat.pls4-kappa(eta.hat.pls4))
 
 }
 
-plot(c(1,max(nc)),c(0,1),col="white",main="CORR")
+# Visual results
+plot(c(1,max(nc)),c(0,1),col="white",main="CORR test",xaxt="n")
+axis(1, at=which(!is.na(cor2)))
 points(cor2,col=2)
 points(cor3,col=3)
 points(cor4,col=4)
-legend("topleft", col=c(2,3,4), lwd=2, lty=1, cex=1, c("2-level","3-level","4-level") )
+legend("topleft", col=c(2,3,4), lwd=2, lty=1, cex=1, c("2-levels","3-levels","4-levels") )
 
-plot(c(1,max(nc)),c(0,50),col="white",main="RSME")
+plot(c(1,max(nc)),c(0,50),col="white",main="RSME test",xaxt="n")
+axis(1, at=which(!is.na(rmse2)))
 points(rmse2,col=2)
 points(rmse3,col=3)
 points(rmse4,col=4)
-legend("topleft", col=c(2,3,4), lwd=2, lty=1, cex=1, c("2-level","3-level","4-level") )
+legend("topleft", col=c(2,3,4), lwd=2, lty=1, cex=1, c("2-levels","3-levels","4-levels") )
 
+plot(c(1,max(nc)),c(0,3000),col="white",main="LogL train",xaxt="n")
+axis(1, at=which(!is.na(ll2)))
+points(ll2,col=2)
+points(ll3,col=3)
+points(ll4,col=4)
+legend("topleft", col=c(2,3,4), lwd=2, lty=1, cex=1, c("2-levels","3-levels","4-levels") )
+
+# Save results
 write(cor2, file="cor2.txt", sep="\n")
 write(cor3, file="cor3.txt", sep="\n")
 write(cor4, file="cor4.txt", sep="\n")
@@ -506,5 +629,82 @@ write(cor4, file="cor4.txt", sep="\n")
 write(rmse2, file="rmse2.txt", sep="\n")
 write(rmse3, file="rmse3.txt", sep="\n")
 write(rmse4, file="rmse4.txt", sep="\n")
+
+write(ll2, file="ll2.txt", sep="\n")
+write(ll3, file="ll3.txt", sep="\n")
+write(ll4, file="ll4.txt", sep="\n")
+
+# Best 2-levels model
+nc2 <- 24
+beta.hat.pls2 <- plsglm.cb.simple(xx.train, y, nc2, scaling=TRUE)
+gc()
+
+eta.hat.pls2 <- as.vector(xx.train%*%beta.hat.pls2[-1]+beta.hat.pls2[1])
+ll.pls2 <- sum(y*eta.hat.pls2-kappa(eta.hat.pls2))
+pred.pls2 <- kappa1(as.vector(xx.test%*%beta.hat.pls2[-1]+beta.hat.pls2[1]))
+rsq.pls2 <- cor(pred.pls2,y.test)^2
+rmse.pls2 <- sqrt(mean((pred.pls2*100-y.test*100)^2))
+
+df.pls2 <- data.frame(y.test,pred.pls2)
+
+pdf("cv_plsglm_model2.pdf",width=10,height=10)
+ggplot(data = df.pls2, aes(x = pred.pls2*100, y = y.test*100)) + theme(text = element_text(size = 40))+
+  labs(title = paste("PLSGLM-",nc2," with 2 levels",sep="")) +
+  theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
+  geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+
+  geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
+  annotate("text",x=c(-35,-31,-27),y=c(95,89,83),label=c(paste("R^2:",round(rsq.pls2,2)),
+                                                  paste("RMSE:",round(rmse.pls2,2)),
+                                                  paste("LogL:",round(ll.pls2,2))), size=10)
+dev.off()
+
+# Best 3-levels model
+nc3 <- which(cor3==max(cor3[!is.na(cor3)]))
+beta.hat.pls3 <- plsglm.cb.simple(xxx.train, y, nc3, scaling=TRUE)
+gc()
+
+eta.hat.pls3 <- as.vector(xxx.train%*%beta.hat.pls3[-1]+beta.hat.pls3[1])
+ll.pls3 <- sum(y*eta.hat.pls3-kappa(eta.hat.pls3))
+pred.pls3 <- kappa1(as.vector(xxx.test%*%beta.hat.pls3[-1]+beta.hat.pls3[1]))
+rsq.pls3 <- cor(pred.pls3,y.test)^2
+rmse.pls3 <- sqrt(mean((pred.pls3*100-y.test*100)^2))
+
+df.pls3 <- data.frame(y.test,pred.pls3)
+
+pdf("cv_plsglm_model3.pdf",width=10,height=10)
+ggplot(data = df.pls3, aes(x = pred.pls3*100, y = y.test*100)) + theme(text = element_text(size = 40))+
+  labs(title = paste("PLSGLM-",nc3," with 3 levels",sep="")) +
+  theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
+  geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+
+  geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
+  annotate("text",x=c(-35,-29,-27),y=c(95,89,83),label=c(paste("R^2:",round(rsq.pls3,2)),
+                                                         paste("RMSE:",round(rmse.pls3,2)),
+                                                         paste("LogL:",round(ll.pls3,2))), size=10)
+dev.off()
+
+# Best 4-levels model
+nc4 <- which(cor4==max(cor4[!is.na(cor4)]))
+beta.hat.pls4 <- plsglm.cb.simple(xxxx.train, y, nc4, scaling=TRUE)
+gc()
+
+eta.hat.pls4 <- as.vector(xxxx.train%*%beta.hat.pls4[-1]+beta.hat.pls4[1])
+ll.pls4 <- sum(y*eta.hat.pls4-kappa(eta.hat.pls4))
+pred.pls4 <- kappa1(as.vector(xxxx.test%*%beta.hat.pls4[-1]+beta.hat.pls4[1]))
+rsq.pls4 <- cor(pred.pls4,y.test)^2
+rmse.pls4 <- sqrt(mean((pred.pls4*100-y.test*100)^2))
+
+df.pls4 <- data.frame(y.test,pred.pls4)
+
+pdf("cv_plsglm_model4.pdf",width=10,height=10)
+ggplot(data = df.pls4, aes(x = pred.pls4*100, y = y.test*100)) + theme(text = element_text(size = 40))+
+  labs(title = paste("PLSGLM-",nc4," with 4 levels",sep="")) +
+  theme(plot.title = element_textbox(hjust = 0.5, margin = margin(t = 5, b = 5)))+
+  geom_point(color="cornflowerblue",size=3)+xlab("Predicted Yield")+ylab("Observed Yield")+geom_abline(intercept = 0, slope = 1, size = 1.5,linetype = "dashed")+xlim(-50,100)+
+  annotate("text",x=c(-35,-29,-27),y=c(95,89,83),label=c(paste("R^2:",round(rsq.pls4,2)),
+                                                         paste("RMSE:",round(rmse.pls4,2)),
+                                                         paste("LogL:",round(ll.pls4,2))), size=10)
+dev.off()
+
+
 
 

@@ -68,6 +68,7 @@ fisher.scoring <- function(y,x,initial){
   
   # Initialization
   beta0 <- initial
+  beta1 <- beta0
   
   # Main loop
   x <- cbind(rep(1,nrow(x)),x)

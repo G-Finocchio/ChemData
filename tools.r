@@ -477,9 +477,7 @@ plsglm.cb <- function(X, Y, ncomp, beta0=NULL,
       }
     }
   }
-  
-  gc()
-  
+
   return(list(BETA=beta.tilde, 
               beta=beta, 
               Z=Z, W=W, 

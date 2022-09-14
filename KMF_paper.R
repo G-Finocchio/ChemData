@@ -704,6 +704,28 @@ write(ll2NS, file="cv_ll2NS.txt", sep="\n")
 write(ll3NS, file="cv_ll3NS.txt", sep="\n")
 write(ll4NS, file="cv_ll4NS.txt", sep="\n")
 
+#Load results
+cor2 <- scan(file="cv_cor2.txt", sep="\n")
+cor3 <- scan(file="cv_cor3.txt", sep="\n")
+cor4 <- scan(file="cv_cor4.txt", sep="\n")
+cor2NS <- scan(file="cv_cor2NS.txt", sep="\n")
+cor3NS <- scan(file="cv_cor3NS.txt", sep="\n")
+cor4NS <- scan(file="cv_cor4NS.txt", sep="\n")
+
+rmse2 <- scan(file="cv_rmse2.txt", sep="\n")
+rmse3 <- scan(file="cv_rmse3.txt", sep="\n")
+rmse4 <- scan(file="cv_rmse4.txt", sep="\n")
+rmse2NS <- scan(file="cv_rmse2NS.txt", sep="\n")
+rmse3NS <- scan(file="cv_rmse3NS.txt", sep="\n")
+rmse4NS <- scan(file="cv_rmse4NS.txt", sep="\n")
+
+ll2 <- scan(file="cv_ll2.txt", sep="\n")
+ll3 <- scan(file="cv_ll3.txt", sep="\n")
+ll4 <- scan(file="cv_ll4.txt", sep="\n")
+ll2NS <- scan(file="cv_ll2NS.txt", sep="\n")
+ll3NS <- scan(file="cv_ll3NS.txt", sep="\n")
+ll4NS <- scan(file="cv_ll4NS.txt", sep="\n")
+
 # Select best models
 nc2 <- which(cor2==max(cor2[nc]))
 nc2NS <- which(cor2NS==max(cor2NS[nc]))
@@ -722,6 +744,23 @@ text(c(nc2,nc2NS,nc3,nc3NS,nc4,nc4NS)-1,
      labels=c(round(cor2[nc2]^2,4),round(cor2NS[nc2NS]^2,4),
               round(cor3[nc3]^2,4),round(cor3NS[nc3NS]^2,4),
               round(cor4[nc4]^2,4),round(cor4NS[nc4NS]^2,4)),
+     col=c(2,2,3,3,4,4))
+legend("topright", 
+       col=c(2,2,3,3,4,4), 
+       lwd=1, cex=1, lty=NA,
+       c("2-lev","2-levNS","3-lev","3-levNS","4-lev","4-levNS"),
+       pch=c(16,17,16,17,16,17))
+
+plot(c(1,6),c(min(nc),max(nc)),col="white",xaxt="n",yaxt="n",main="Minimal models R^2")
+axis(2,at=nc)
+points(c(24,24,39,30,42,18), 
+       col=c(2,2,3,3,4,4),
+       pch=c(16,17,16,17,16,17),
+       cex=2)
+text(c(24,24,39,30,42,18)-1,
+     labels=c(round(cor2[24]^2,2),round(cor2NS[24]^2,2),
+              round(cor3[39]^2,2),round(cor3NS[30]^2,2),
+              round(cor4[42]^2,2),round(cor4NS[18]^2,2)),
      col=c(2,2,3,3,4,4))
 legend("topright", 
        col=c(2,2,3,3,4,4), 

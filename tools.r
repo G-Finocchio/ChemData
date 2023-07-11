@@ -28,20 +28,50 @@ element_grob.element_textbox <- function(element, ...) {
 
 # Continuous Bernoulli likelihood
 
-kappa <- function(x) log((exp(x)-1)/x)
+kappa0 <- function(x) {
+  k0 <- rep(0,length(x))
+  tt <- which((x<=700)&(x!=0))
+  k0[tt] <- log((exp(x[tt])-1)/x[tt])
+  tt <- which(x>700)
+  k0[tt] <- x[tt] - log(x[tt])
+  return(k0)
+}
 
 kappa1 <- function(x) {
   k1 <- rep(1/2,length(x))
-  tt <- which(x!=0)
+  tt <- which(abs(x)<=0.0001)
+  k1[tt] <- 1/2 + x[tt]/12 - x[tt]^3/720 + x[tt]^5/30240
+  tt <- which(abs(x)>0.0001)
   k1[tt] <- 1 - 1/(x[tt]) - 1/(1-exp(x[tt]))
   return(k1)
 }
 
 kappa2 <- function(x) {
   k2 <- rep(1/12,length(x))
-  tt <- which(x!=0)
+  tt <- which(abs(x)<=0.015)
+  k2[tt] <- 1/12 - x[tt]^2/240 + x[tt]^4/6048
+  tt <- which(abs(x)>0.015)
   k2[tt] <- 1/(x[tt])^2 + 1/(2-2*cosh(x[tt]))
   return(k2)
+}
+
+g.link <- function(x) {
+  tt <- apply(as.matrix(x), 1, FUN=function(v) min(max(v,0.001),0.999))
+  g <- 3.5*tan(pi*(2*tt-1)/2) 
+  return(g)
+}
+
+V.link <- function(x) {
+  V <- kappa2(g.link(x))
+  return(V)
+}
+
+A.link <- function(x) {
+  A <- rep(0,length(x))
+  for (tt in 1:length(x)) {
+    A[tt] <- integrate(function(x) (V.link(x))^(-1/3), lower=0, upper=x[tt], subdivisions=1000)$value
+  }
+  return(A)
 }
 
 
@@ -50,21 +80,6 @@ kappa2 <- function(x) {
 # Fisher scoring
 
 fisher.scoring <- function(y,x,initial){
-  
-  # CB likelihood
-  kappa1 <- function(x) {
-    k1 <- rep(1/2,length(x))
-    tt <- which(x!=0)
-    k1[tt] <- 1 - 1/(x[tt]) - 1/(1-exp(x[tt]))
-    return(k1)
-  }
-  
-  kappa2 <- function(x) {
-    k2 <- rep(1/12,length(x))
-    tt <- which(x!=0)
-    k2[tt] <- 1/(x[tt])^2 + 1/(2-2*cosh(x[tt]))
-    return(k2)
-  }
   
   # Initialization
   beta0 <- initial
@@ -79,7 +94,6 @@ fisher.scoring <- function(y,x,initial){
     
     kp <- kappa1(eta)
     kpp <- kappa2(eta)
-    
     kpp[which(kpp<0.01)] <- 0.01
     
     W <- kpp
@@ -88,7 +102,7 @@ fisher.scoring <- function(y,x,initial){
     beta1 <- fit$coef
     epsilon <- sqrt(sum((beta0-beta1)^2)/sum(beta0^2))
     print(paste("Epsilon: ", epsilon, sep=""))
-    if(epsilon<=0.05) break
+    if(epsilon<=0.01) break
     if(counter==100) {print("no convergence"); break}
     beta0 <- beta1
   }
@@ -300,8 +314,8 @@ plslm <- function(X, Y, ncomp,
 
 plsglm.cb <- function(X, Y, ncomp, beta0=NULL,
                       centering=TRUE, scaling=TRUE, intercept=TRUE,
-                      maxit=50, tol=1e-6,
-                      verbose=FALSE){
+                      maxit=10, tol=0.0545,
+                      verbose=FALSE, clip=0.01){
   
   if (verbose) print("Performing PLSGLM-NEW")
   
@@ -399,7 +413,7 @@ plsglm.cb <- function(X, Y, ncomp, beta0=NULL,
       k.p[,,m] <- kappa1(eta[,,m])
       
       k.pp[,,m] <- kappa2(eta[,,m])
-      k.pp[,,m][which(k.pp[,,m]<0.01)] <- 0.01
+      k.pp[,,m][which(k.pp[,,m]<clip)] <- clip
       
       W[,,m] <- diag(as.vector(k.pp[,,m]))
       
@@ -425,11 +439,11 @@ plsglm.cb <- function(X, Y, ncomp, beta0=NULL,
     #print(paste("Divergence", paste(epsilon, collapse=" "), sep=" "))
     print(paste("Min Divergence", min(epsilon[nc]), sep=" "))
     
-    log.like <- apply(beta, 3, function(v) sum(kappa1(X%*%v)*Y+(1-kappa1(X%*%v))*(1-Y)))
-    #print(paste("Loglike", paste(log.like, collapse=" "), sep=" "))
+    log.like <- apply(beta, 3, function(v) sum((X%*%v)*Y-kappa0(X%*%v)))
+    #print(paste("Max Loglike", max(log.like[nc]), sep=" "))
     
-    log.like.ratio <- log.like - apply(beta.old, 3, function(v) sum(kappa1(X%*%v)*Y+(1-kappa1(X%*%v))*(1-Y)))
-    #print(paste("Loglike ratio", paste(log.like.ratio, collapse=" "), sep=" "))
+    log.like.ratio <- log.like - apply(beta.old, 3, function(v) sum((X%*%v)*Y-kappa0(X%*%v)))
+    print(paste("Min Loglike ratio", min(log.like.ratio[nc]), sep=" "))
     
     if (sum(is.nan(epsilon[nc]))>0) {
       nan.stop <- which(is.nan(epsilon))
@@ -442,10 +456,10 @@ plsglm.cb <- function(X, Y, ncomp, beta0=NULL,
       nc <- setdiff(nc, nan.stop)
     }
     
-    if (min(epsilon[nc])<tol) { 
-      nc.stop <- which(epsilon<tol)
+    if ((min(epsilon[nc])<tol)|(min(log.like.ratio[nc])<tol)) { 
+      nc.stop <- which((epsilon<tol)|(log.like.ratio<tol))
       it.stop[nc.stop] <- counter
-      if (verbose) print(paste("Divergence stop comps", paste(nc.stop, collapse=" ")))
+      if (verbose) print(paste("Divergence/Loglike stop comps", paste(nc.stop, collapse=" ")))
       nc <- setdiff(nc, nc.stop)
     }
     
@@ -492,7 +506,7 @@ plsglm.cb <- function(X, Y, ncomp, beta0=NULL,
 plsglm.cb.simple <- function(x, y, m.plsglm, 
                              beta0=NULL,
                              centering=TRUE, scaling=TRUE, intercept=TRUE,
-                             maxit=20, tol=0.05,
+                             maxit=10, tol=0.0545,
                              verbose=FALSE){
   
   return(plsglm.cb(X=x, Y=y, ncomp=m.plsglm, 
@@ -501,4 +515,73 @@ plsglm.cb.simple <- function(x, y, m.plsglm,
                    maxit=maxit, tol=tol,
                    verbose=verbose)$BETA[,,m.plsglm])
 }
+
+
+
+# The next function computes DoF for PLS
+
+dof.pls <- function(X, Y, m.max, Lambda){
+  
+  # Get variables
+  X <- as.matrix(X)
+  Y <- as.matrix(Y)
+  A <- t(X)%*%X
+  
+  n <- dim(X)[1]
+  p <- dim(X)[2]
+  
+  # Initialize matrix of weights
+  K <- matrix(0, nrow = p, ncol = m.max)
+  
+  # Run NIPALS algorithm
+  X <- as.matrix(X)
+  Y <- as.matrix(y.all)
+  w <- matrix(0, nrow = p, ncol = 1)
+  s <- matrix(0, nrow = n, ncol = 1)
+  c <- 0
+  
+  for (i in 1:m.max){
+    #print(paste("Checking",i))
+    w <- t(X)%*%Y
+    if (sqrt(sum(w^2))==0){
+      break
+    }
+    w <- w/sqrt(sum(w^2))
+    K[1:p, i] <- w
+    s <- X%*%w
+    P <- (t(X)%*%s)/drop(t(s)%*%s)
+    X <- X - s%*%t(P)
+    c <- drop(t(s)%*%Y)/drop(t(s)%*%s)
+    Y <- Y - c*s
+  }
+  
+  D <- t(K)%*%A%*%K
+  
+  # Compute Ritz values
+  Theta <- matrix(0, nrow = m.max, ncol = m.max)
+  for (i in 1:m.max){
+    Theta[1:i,i] <- eigen(D[1:i,1:i])$values
+  }
+  
+  # Compute shrinkage factors
+  Z <- matrix(0, nrow = p, ncol = m.max)
+  product <- 1
+  for (m in 1:m.max){
+    for (i in 1:p){
+      for (j in 1:m){
+        #product <- product*(1 - Lambda[i]/Theta[j,m])
+        product <- product*(1 - Lambda[i]/Lambda[j])
+      }
+      Z[i,m] <- 1 - product
+      product = 1
+    }
+  }
+  
+  # Compute DoF
+  DOF <- apply(Z, 2, function(v) min(abs(sum(v)),p))
+  
+  return(list(DOF=DOF,Z=Z,Theta=Theta))
+}
+
+
 

@@ -10,6 +10,7 @@ It contains all the files that produce the results.
 - "Grid_search_local.R" contains an example on how grid search can be performed. 
 - "Train_test_comparison.R" contains the prediction on test set with best Random forest model, Lasso model, and SH Lasso model. The RF and Lasso models are trained for best coefficients, while the best SH Lasso coefficients are loaded .(SH Lasso can also be trained from scratch, but this might take 2 hours.) The parameter tuning was done with cross validation on train set. 
 - "Plots_and_matrix_form_comparison.R" contains some plots and the comparison discussed in section 3 in Supplement. It does not contain the main results of the paper.
+- It also contains a folder with the chemical data.
 
 2) coefficients
 It contains rds files with the coefficients obtained by using our model for given penalizations on all data/train-test split of our data. The names of the files contain the regularization term (lambda) for the main effects, two-way interactions and three-way interactions in this order. 
@@ -26,7 +27,7 @@ It contains the files with all the functions used to build our model and generat
 
 4) Results
 -It contains the table of coefficients obtained by using our hierarchical model on the entire data.
--It also contains the plots for predicted vs observed for Lasso, Random Forest, SH Lasso on test data and SH Lasso on entire data.
+-It also contains the plots for predicted vs observed for Lasso, Random Forest, SH Lasso on test data.
 
 Information about running the code:
 

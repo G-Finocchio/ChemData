@@ -31,6 +31,6 @@ It contains the files with all the functions used to build our model and generat
 
 Information about running the code:
 
--Running "Final_resuts.R" and "Train_test_comparison.R" will produce the main results from the paper and the supplement of the paper.
+-Running "Data_analysis.R" and "Train_test_comparison.R" will produce the main results from the paper and the supplement of the paper.
 
 -We will report the running times for our model on an Intel(R) Core(TM) Ultra 7 155U 1.70 GHz. Training our hierarchical model from scratch on the entire data takes between 1 and 15 hours depending on the amount of regularization considering tolerance level for convergence between 5*10^(-2) and *10^(-3). The higher the regularization, the faster is the model due to the hierarchical constraints. Training the model on entire data for the final amount of penalization selected by AIC takes 3 hours (i.e., running time for "Data_Analysis.R").     

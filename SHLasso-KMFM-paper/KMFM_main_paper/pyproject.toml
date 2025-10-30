@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Strong_hierarchical_lasso"
+version = "0.1.0"
+description = "A Python package for strong hierarchical lasso(SHL)."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+
+authors = [
+    { name = "Tatyana Krivobokova", email = "tatyana.krivobokova@univie.ac.at" },
+    { name = "Razvan-Andrei Morariu", email = "razvan-andrei.morariu@univie.ac.at" },
+    { name = "Gianluca Finocchio", email = "gianluca.finocchio@univie.ac.at" }
+]
+
+dependencies = [
+    "matplotlib",
+    "numpy",
+    "openpyxl",
+    "pandas",
+    "scikit-learn",
+    "scipy"
+]
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]

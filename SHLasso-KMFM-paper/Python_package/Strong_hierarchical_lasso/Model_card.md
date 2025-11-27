@@ -40,16 +40,16 @@ Continuous Bernoulli response model:
 
 <!-- Provide the basic links for the model. -->
 
-- **Repository:** https://gitlab.phaidra.org/morariur41/ChemData.git
+- **Repository:** https://github.com/G-Finocchio/ChemData.git
 - **Paper:** https://chemrxiv.org/engage/api-gateway/chemrxiv/assets/orp/resource/item/6818bb8ae561f77ed4227799/original/modelling-and-estimation-of-chemical-reaction-yields-from-high-throughput-experiments.pdf
-- **Demo:** https://gitlab.phaidra.org/morariur41/ChemData/-/tree/main/SHLasso-KMFM-paper/Supplementary_results/SHL_library_basic_tutorial
+- **Demo:** https://github.com/G-Finocchio/ChemData/tree/main/SHLasso-KMFM-paper/Supplementary_results/SHL_library_basic_tutorial
 ## Uses
 
 The model is designed to be used on factorial data up to 5 factors and normal or continuous Bernoulli response. For details consult the associated paper.
 
 ## How to Get Started with the Model
 
-The **Demo** is a good way to firstly use the model. More complex cases where the model is used on real data can be found [here](https://gitlab.phaidra.org/morariur41/ChemData.git)
+The **Demo** is a good way to firstly use the model. More complex cases where the model is used on real data can be found [here](https://github.com/G-Finocchio/ChemData.git)
 
 ## Training Details
 
@@ -77,7 +77,7 @@ Continuous Bernoulli response up to 4 factors: A coordinate descent approach is 
 
 #### Data
 
-The real model was used on three real datasets that can be found at [Data](https://gitlab.phaidra.org/morariur41/ChemData/-/tree/main/SHLasso-KMFM-paper/KMFM_main_paper/Data).
+The real model was used on three real datasets that can be found at [Data](https://github.com/G-Finocchio/ChemData/tree/main/SHLasso-KMFM-paper/KMFM_main_paper/Data).
 
 
 #### Metrics
@@ -87,7 +87,7 @@ However, it should be noted that the primary goal of the model is **accurate est
 
 ### Results
 
-See https://gitlab.phaidra.org/morariur41/ChemData.git.
+See https://github.com/G-Finocchio/ChemData.git.
 
 ## Environmental Impact
 

@@ -1,9 +1,3 @@
----
-# For reference on model card metadata, see the spec: https://github.com/huggingface/hub-docs/blob/main/modelcard.md?plain=1
-# Doc / guide: https://huggingface.co/docs/hub/model-cards
-{{ card_data }}
----
-
 # Model Card for Strong_hierarchical_lasso
 
 The model is a penalized GLM with hierarchical constraints.
@@ -46,17 +40,16 @@ Continuous Bernoulli response model:
 
 <!-- Provide the basic links for the model. -->
 
-- **Repository:** https://github.com/G-Finocchio/ChemData/tree/main/SHLasso-KMFM-paper/KMFM_main_paper/Strong_hierarchical_lasso
+- **Repository:** https://gitlab.phaidra.org/morariur41/ChemData.git
 - **Paper:** https://chemrxiv.org/engage/api-gateway/chemrxiv/assets/orp/resource/item/6818bb8ae561f77ed4227799/original/modelling-and-estimation-of-chemical-reaction-yields-from-high-throughput-experiments.pdf
-- **Demo:** https://github.com/G-Finocchio/ChemData/tree/main/SHLasso-KMFM-paper/Supplementary_results/SHL_library_basic_tutorial
-
+- **Demo:** https://gitlab.phaidra.org/morariur41/ChemData/-/tree/main/SHLasso-KMFM-paper/Supplementary_results/SHL_library_basic_tutorial
 ## Uses
 
 The model is designed to be used on factorial data up to 5 factors and normal or continuous Bernoulli response. For details consult the associated paper.
 
 ## How to Get Started with the Model
 
-The **Demo** is a good way to firstly use the model. More complex cases where the model is used on real data can be found at [Demo](https://github.com/G-Finocchio/ChemData/tree/main/SHLasso-KMFM-paper).
+The **Demo** is a good way to firstly use the model. More complex cases where the model is used on real data can be found [here](https://gitlab.phaidra.org/morariur41/ChemData.git)
 
 ## Training Details
 
@@ -84,7 +77,7 @@ Continuous Bernoulli response up to 4 factors: A coordinate descent approach is 
 
 #### Data
 
-The real model was used on three real datasets that can be found at [Data](https://github.com/G-Finocchio/ChemData/tree/main/SHLasso-KMFM-paper/KMFM_main_paper/Data).
+The real model was used on three real datasets that can be found at [Data](https://gitlab.phaidra.org/morariur41/ChemData/-/tree/main/SHLasso-KMFM-paper/KMFM_main_paper/Data).
 
 
 #### Metrics
@@ -94,13 +87,11 @@ However, it should be noted that the primary goal of the model is **accurate est
 
 ### Results
 
-See https://github.com/G-Finocchio/ChemData/tree/main/SHLasso-KMFM-paper.
+See https://gitlab.phaidra.org/morariur41/ChemData.git.
 
 ## Environmental Impact
 
 <!-- Total emissions (in grams of CO2eq) and additional considerations, such as electricity usage, go here. Edit the suggested text below accordingly -->
-
-Carbon emissions can be estimated using the [Machine Learning Impact calculator](https://mlco2.github.io/impact#compute) presented in [Lacoste et al. (2019)](https://arxiv.org/abs/1910.09700).
 
 - **Hardware Type:** Personal laptop (Intel® Core™ Ultra 7 155U, 1.70 GHz)
 - **Hours used:** Approximately 0.5–5 hours per full training run (depending on regularization)

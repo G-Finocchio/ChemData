@@ -75,12 +75,7 @@ Validation notebooks for comparing our model with other benchmark models in term
 
 ---
 
-###  Top-Level Files
-- **ReadMe.md** — This file (project description and structure).
-- **KMFM_main_paper/** — Main SHL implementation and core analyses.
-- **Supplementary_results/** — Auxiliary results, tutorials.
 
----
 
 ## ⚙️ Installation
 

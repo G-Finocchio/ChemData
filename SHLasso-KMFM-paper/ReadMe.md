@@ -3,9 +3,9 @@
 This repository contains all materials related to the **Modelling and estimation of chemical reaction yields from high-throughput experiments** paper, including the Python package implementation, analysis scripts, datasets, and supplementary results.  
 The project is organized into two main components:
 
-- **KMFM_main_paper/** — Core analyses and package implementation  
+- **KMFM_main_paper/** — Core analyses 
 - **Supplementary_results/** — Auxiliary results and tutorials  
-
+- **Python_package/** — Strong hierarchical Lasso implementation
 ---
 
 ## 📂 Folder Structure Overview
